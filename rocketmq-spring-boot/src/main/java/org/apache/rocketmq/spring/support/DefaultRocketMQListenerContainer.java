@@ -480,22 +480,22 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         if (Objects.equals(messageType, MessageExt.class)) {
             return messageExt;
         } else {
-            String str = new String(messageExt.getBody(), Charset.forName(charset));
+            byte[] payload = messageExt.getBody();
             if (Objects.equals(messageType, String.class)) {
-                return str;
+                return new String(messageExt.getBody(), Charset.forName(charset));
             } else {
                 // If msgType not string, use objectMapper change it.
                 try {
                     if (messageType instanceof Class) {
                         //if the messageType has not Generic Parameter
-                        return this.getMessageConverter().fromMessage(MessageBuilder.withPayload(str).build(), (Class<?>) messageType);
+                        return this.getMessageConverter().fromMessage(MessageBuilder.withPayload(payload).build(), (Class<?>) messageType);
                     } else {
                         //if the messageType has Generic Parameter, then use SmartMessageConverter#fromMessage with third parameter "conversionHint".
                         //we have validate the MessageConverter is SmartMessageConverter in this#getMethodParameter.
-                        return ((SmartMessageConverter) this.getMessageConverter()).fromMessage(MessageBuilder.withPayload(str).build(), (Class<?>) ((ParameterizedType) messageType).getRawType(), methodParameter);
+                        return ((SmartMessageConverter) this.getMessageConverter()).fromMessage(MessageBuilder.withPayload(payload).build(), (Class<?>) ((ParameterizedType) messageType).getRawType(), methodParameter);
                     }
                 } catch (Exception e) {
-                    log.info("convert failed. str:{}, msgType:{}", str, messageType);
+                    log.info("convert failed. str:{}, msgType:{}", new String(messageExt.getBody(), Charset.forName(charset)), messageType);
                     throw new RuntimeException("cannot convert message to " + messageType, e);
                 }
             }
